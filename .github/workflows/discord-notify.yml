@@ -1,0 +1,22 @@
+name: Discord Notification
+
+on:
+  push:
+    branches: [main, master]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord notification
+        run: |
+          curl -X POST "${{ secrets.DISCORD_WEBHOOK }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "username": "Raccoon Bot",
+              "avatar_url": "https://avatars.githubusercontent.com/u/195688984",
+              "content": "🦀 **${{ github.repository }}**\n📝 Push by ${{ github.actor }}\n🔗 [View commit](https://github.com/${{ github.repository }}/commit/${{ github.sha }})"
+            }'
