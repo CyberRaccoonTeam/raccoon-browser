@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦝 Raccoon Browser</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="browser-container">
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+            <div class="tabs">
+                <div class="tab active">
+                    <span class="tab-icon">🦝</span>
+                    <span class="tab-title" id="tab-title">New Tab</span>
+                </div>
+            </div>
+            <button class="tab-new" id="new-tab">+</button>
+        </div>
+
+        <!-- Navigation Bar -->
+        <div class="nav-bar">
+            <div class="nav-buttons">
+                <button id="btn-back" class="nav-btn" title="Back">←</button>
+                <button id="btn-forward" class="nav-btn" title="Forward">→</button>
+                <button id="btn-refresh" class="nav-btn" title="Refresh">↻</button>
+                <button id="btn-home" class="nav-btn" title="Home">🏠</button>
+            </div>
+            
+            <div class="url-bar">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="url-input" placeholder="Search with Raccoon or enter URL..." autocomplete="off">
+                <button id="btn-trash" class="trash-btn" title="Clear History">🗑️</button>
+            </div>
+
+            <div class="nav-actions">
+                <button id="btn-bookmark" class="bookmark-btn" title="Bookmark this page">☆</button>
+                <button id="btn-bookmarks" class="bookmarks-btn" title="View bookmarks">📑</button>
+                <span id="privacy-badge" class="privacy-badge" title="Click for privacy details">🔒 Protected</span>
+            </div>
+        </div>
+
+        <!-- Privacy Panel (hidden by default) -->
+        <div id="privacy-panel" class="privacy-panel">
+            <div class="privacy-panel-header">
+                <h4>🛡️ Privacy Shield</h4>
+                <button class="panel-close" onclick="closePrivacyPanel()">×</button>
+            </div>
+            <div class="privacy-score-container">
+                <div id="privacy-score-circle" class="privacy-score-circle">
+                    <span id="privacy-score-value">--</span>
+                </div>
+                <p id="privacy-score-label">Privacy Score</p>
+            </div>
+            <div class="privacy-stats">
+                <div class="stat-item">
+                    <span class="stat-icon">🎯</span>
+                    <span class="stat-label">Trackers Blocked</span>
+                    <span id="stat-trackers" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">📢</span>
+                    <span class="stat-label">Ads Blocked</span>
+                    <span id="stat-ads" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">👥</span>
+                    <span class="stat-label">Social Trackers</span>
+                    <span id="stat-social" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">🔒</span>
+                    <span class="stat-label">Connection</span>
+                    <span id="stat-https" class="stat-value">--</span>
+                </div>
+            </div>
+            <div id="blocked-domains" class="blocked-domains">
+                <h5>Blocked Domains</h5>
+                <ul id="blocked-list"></ul>
+            </div>
+        </div>
+
+        <!-- Bookmarks Panel (hidden by default) -->
+        <div id="bookmarks-panel" class="bookmarks-panel">
+            <div class="bookmarks-panel-header">
+                <h4>📑 Bookmarks</h4>
+                <button class="panel-close" onclick="closeBookmarksPanel()">×</button>
+            </div>
+            <div id="bookmarks-list" class="bookmarks-list">
+                <!-- Bookmarks loaded here -->
+            </div>
+            <div class="bookmarks-footer">
+                <button onclick="exportBookmarks()" title="Export bookmarks">📤 Export</button>
+                <button onclick="clearBookmarks()" title="Clear all bookmarks">🗑️ Clear</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content-area">
+            <!-- Welcome Page -->
+            <div id="welcome-page" class="welcome-page active">
+                <div class="welcome-content">
+                    <div class="logo">🦝</div>
+                    <h1>Raccoon Browser</h1>
+                    <p class="tagline">Digging through the web so you don't have to.</p>
+                    
+                    <div class="search-box">
+                        <input type="text" id="search-input" placeholder="Search privately..." autocomplete="off">
+                        <button id="search-btn">Search</button>
+                    </div>
+
+                    <div class="quick-links">
+                        <a href="#" class="quick-link" data-url="https://github.com">
+                            <span class="ql-icon">💻</span>
+                            <span>GitHub</span>
+                        </a>
+                        <a href="#" class="quick-link" data-url="https://reddit.com">
+                            <span class="ql-icon">📱</span>
+                            <span>Reddit</span>
+                        </a>
+                        <a href="#" class="quick-link" data-url="https://youtube.com">
+                            <span class="ql-icon">▶️</span>
+                            <span>YouTube</span>
+                        </a>
+                        <a href="#" class="quick-link" data-url="https://wikipedia.org">
+                            <span class="ql-icon">📚</span>
+                            <span>Wikipedia</span>
+                        </a>
+                    </div>
+
+                    <div class="privacy-features">
+                        <span>🔒 No Tracking</span>
+                        <span>⚡ Fast</span>
+                        <span>🦝 Clever</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Results Page -->
+            <div id="results-page" class="results-page">
+                <div class="results-header">
+                    <h2 id="results-title">Search Results</h2>
+                    <span id="results-count" class="results-count"></span>
+                </div>
+                <div id="results-list" class="results-list"></div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loading-page" class="loading-page">
+                <div class="loader">
+                    <div class="loader-raccoon">🦝</div>
+                    <p>Digging through the web...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <span id="status-text">Ready</span>
+            <div class="status-right">
+                <span id="status-source">🦝 Raccoon Search</span>
+                <button id="btn-shortcuts" class="shortcuts-btn" title="Keyboard Shortcuts">⌨️</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div id="shortcuts-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>⌨️ Keyboard Shortcuts</h3>
+                <button class="modal-close" onclick="closeShortcutsModal()">×</button>
+            </div>
+            <div class="shortcuts-grid">
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>T</kbd>
+                    <span>New Tab</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>W</kbd>
+                    <span>Close Tab</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>L</kbd>
+                    <span>Focus URL Bar</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>R</kbd>
+                    <span>Refresh</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>Tab</kbd>
+                    <span>Next Tab</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Tab</kbd>
+                    <span>Previous Tab</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>1-9</kbd>
+                    <span>Switch to Tab</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Alt</kbd> + <kbd>←</kbd>
+                    <span>Back</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Alt</kbd> + <kbd>→</kbd>
+                    <span>Forward</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Alt</kbd> + <kbd>Home</kbd>
+                    <span>Go Home</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Esc</kbd>
+                    <span>Close Menu</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>/</kbd>
+                    <span>Show Shortcuts</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

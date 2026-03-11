@@ -1,0 +1,9 @@
+# 🦝 Raccoon Browser - Advanced Requirements
+PyQt5>=5.15.0
+PyQtWebEngine>=5.15.0
+flask>=3.0.0
+flask-cors>=4.0.0
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+PyJWT>=2.8.0
+cryptography>=41.0.0

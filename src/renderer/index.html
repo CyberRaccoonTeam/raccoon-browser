@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src *;">
+  <title>Raccoon Browser</title>
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+  <div class="browser-container">
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+      <div class="tabs">
+        <div class="tab active">
+          <span class="tab-icon">🦝</span>
+          <span class="tab-title">New Tab</span>
+          <button class="tab-close">×</button>
+        </div>
+      </div>
+      <button class="tab-new">+</button>
+    </div>
+
+    <!-- Navigation Bar -->
+    <div class="nav-bar">
+      <div class="nav-buttons">
+        <button id="btn-back" class="nav-btn" disabled>←</button>
+        <button id="btn-forward" class="nav-btn" disabled>→</button>
+        <button id="btn-refresh" class="nav-btn">↻</button>
+        <button id="btn-home" class="nav-btn">🏠</button>
+      </div>
+      
+      <div class="url-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="url-input" placeholder="Search with Raccoon or enter URL...">
+        <button id="btn-trash" class="trash-btn" title="Empty Trash (Clear Cache)">🗑️</button>
+      </div>
+
+      <div class="nav-actions">
+        <button id="btn-menu" class="nav-btn">☰</button>
+      </div>
+    </div>
+
+    <!-- Browser View -->
+    <div class="browser-view">
+      <!-- Welcome Page -->
+      <div id="welcome-page" class="welcome-page">
+        <div class="welcome-content">
+          <div class="logo">🦝</div>
+          <h1>Raccoon Browser</h1>
+          <p class="tagline">Digging through the web so you don't have to.</p>
+          
+          <div class="search-box">
+            <input type="text" id="search-input" placeholder="Search privately...">
+            <button id="search-btn">Search</button>
+          </div>
+
+          <div class="quick-links">
+            <a href="#" data-url="https://github.com" class="quick-link">
+              <span class="ql-icon">💻</span>
+              <span>GitHub</span>
+            </a>
+            <a href="#" data-url="https://reddit.com" class="quick-link">
+              <span class="ql-icon">📱</span>
+              <span>Reddit</span>
+            </a>
+            <a href="#" data-url="https://youtube.com" class="quick-link">
+              <span class="ql-icon">▶️</span>
+              <span>YouTube</span>
+            </a>
+            <a href="#" data-url="https://wikipedia.org" class="quick-link">
+              <span class="ql-icon">📚</span>
+              <span>Wikipedia</span>
+            </a>
+          </div>
+
+          <div class="privacy-badge">
+            <span>🔒 Privacy First</span>
+            <span>⚡ Fast</span>
+            <span>🦝 Clever</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Web Content (iframe for now, webview later) -->
+      <webview id="web-content" src="about:blank" style="display: none;"></webview>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <span id="status-text">Ready</span>
+      <span id="privacy-status">🔒 Protected</span>
+    </div>
+  </div>
+
+  <script src="scripts/app.js"></script>
+</body>
+</html>
