@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦝 Search Results</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">🦝</span>
+                <span class="logo-text">Raccoon Browser</span>
+            </div>
+            <nav class="nav">
+                <a href="/" class="nav-link">Search</a>
+                <a href="#" class="nav-link" id="bookmarksBtn">Bookmarks</a>
+            </nav>
+        </header>
+
+        <main class="main">
+            <!-- Search Form -->
+            <form action="/search" method="GET" class="search-form-inline">
+                <input type="text" name="q" class="search-input" value="{{ query }}" placeholder="Search...">
+                <button type="submit" class="search-btn">🔍</button>
+            </form>
+
+            <h2 class="results-title">Results for "{{ query }}"</h2>
+
+            {% if results %}
+            <div class="results-list">
+                {% for result in results %}
+                <div class="result-item">
+                    <h3 class="result-title">
+                        <a href="/browse?url={{ result.url | urlencode }}">{{ result.title }}</a>
+                    </h3>
+                    <p class="result-url">{{ result.url }}</p>
+                    <p class="result-snippet">{{ result.snippet }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-results">
+                <p>🦝 No results found. Try a different search.</p>
+            </div>
+            {% endif %}
+        </main>
+
+        <footer class="footer">
+            <p>Built by 🦝 Raccoon</p>
+        </footer>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

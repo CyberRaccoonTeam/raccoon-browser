@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦝 Raccoon Browser</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">🦝</span>
+                <span class="logo-text">Raccoon Browser</span>
+            </div>
+            <nav class="nav">
+                <a href="/" class="nav-link">Search</a>
+                <a href="#" class="nav-link" id="bookmarksBtn">Bookmarks</a>
+                <a href="#" class="nav-link" id="historyBtn">History</a>
+            </nav>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Search Box -->
+            <div class="search-section">
+                <h1 class="title">Dig Through the Web</h1>
+                <p class="subtitle">Privacy-first search. No tracking. No BS.</p>
+                
+                <form action="/search" method="GET" class="search-form">
+                    <input 
+                        type="text" 
+                        name="q" 
+                        class="search-input" 
+                        placeholder="Search the web..."
+                        autocomplete="off"
+                        autofocus
+                    >
+                    <button type="submit" class="search-btn">
+                        🔍 Search
+                    </button>
+                </form>
+
+                <div class="features">
+                    <div class="feature">
+                        <span class="feature-icon">🛡️</span>
+                        <span>Tracker Blocking</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">🔒</span>
+                        <span>Private Search</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">🌙</span>
+                        <span>Dark Theme</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="quick-links">
+                <h3>Quick Links</h3>
+                <div class="links-grid" id="quickLinks">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Bookmarks Modal -->
+        <div class="modal" id="bookmarksModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📑 Bookmarks</h2>
+                    <button class="modal-close" id="closeBookmarks">&times;</button>
+                </div>
+                <div class="modal-body" id="bookmarksList">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- History Modal -->
+        <div class="modal" id="historyModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📜 History</h2>
+                    <button class="modal-close" id="closeHistory">&times;</button>
+                </div>
+                <div class="modal-body" id="historyList">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Built by 🦝 Raccoon | <a href="https://github.com/CyberRaccoonTeam/raccoon-browser" target="_blank">GitHub</a></p>
+        </footer>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
