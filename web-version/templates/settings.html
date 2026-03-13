@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦝 Settings</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .settings-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .settings-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+        
+        .settings-section-header {
+            background: var(--bg-darker);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 1.1rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .settings-section-body {
+            padding: 1.5rem;
+        }
+        
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .setting-row:last-child {
+            border-bottom: none;
+        }
+        
+        .setting-info h4 {
+            margin-bottom: 0.25rem;
+        }
+        
+        .setting-info p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        .setting-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* Toggle Switch */
+        .toggle {
+            position: relative;
+            width: 50px;
+            height: 26px;
+        }
+        
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-color);
+            transition: 0.3s;
+            border-radius: 26px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        
+        .toggle input:checked + .toggle-slider {
+            background-color: var(--accent-color);
+        }
+        
+        .toggle input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+        
+        /* Select Dropdown */
+        .settings-select {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+        
+        .settings-select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+        
+        /* Buttons */
+        .btn-danger {
+            background: var(--error);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: opacity 0.2s;
+        }
+        
+        .btn-danger:hover {
+            opacity: 0.9;
+        }
+        
+        .btn-secondary {
+            background: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--accent-color);
+        }
+        
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .stat-card {
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+        
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+        
+        /* Saved Toast */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--success);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">🦝</span>
+                <span class="logo-text">Settings</span>
+            </div>
+            <nav class="nav">
+                <a href="/" class="nav-link">Search</a>
+                <a href="#" class="nav-link" id="bookmarksBtn">Bookmarks</a>
+                <a href="/settings" class="nav-link" style="color: var(--accent-color);">Settings</a>
+            </nav>
+        </header>
+
+        <div class="settings-container">
+            <!-- Search Settings -->
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    🔍 Search
+                </div>
+                <div class="settings-section-body">
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <h4>Default Search Engine</h4>
+                            <p>Choose your preferred search provider</p>
+                        </div>
+                        <div class="setting-control">
+                            <select class="settings-select" id="searchEngine">
+                                <option value="duckduckgo">DuckDuckGo</option>
+                                <option value="searxng">SearXNG</option>
+                                <option value="brave">Brave Search</option>
+                                <option value="google">Google (not recommended)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <h4>Safe Search</h4>
+                            <p>Filter explicit content from results</p>
+                        </div>
+                        <div class="setting-control">
+                            <label class="toggle">
+                                <input type="checkbox" id="safeSearch">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Privacy Settings -->
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    🛡️ Privacy & Security
+                </div>
+                <div class="settings-section-body">
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <h4>Block Trackers</h4>
+                            <p>Block known tracking scripts and pixels</p>
+                        </div>
+                        <div class="setting-control">
+                            <label class="toggle">
+                                <input type="checkbox" id="blockTrackers" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <h4>HTTPS Only</h4>
+                            <p>Only connect to secure websites</p>
+                        </div>
+                        <div class="setting-control">
+                            <label class="toggle">
+                                <input type="checkbox" id="httpsOnly" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <h4>Save Browsing History</h4>
+                            <p>Keep a record of pages you visit</p>
+                        </div>
+                        <div class="setting-control">
+                            <label class="toggle">
+                                <input type="checkbox" id="saveHistory" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appearance -->
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    🎨 Appearance
+                </div>
+                <div class="settings-section-body">
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <h4>Theme</h4>
+                            <p>Raccoon prefers dark mode</p>
+                        </div>
+                        <div class="setting-control">
+                            <select class="settings-select" id="theme">
+                                <option value="dark">Dark (Default)</option>
+                                <option value="darker">Darker</option>
+                                <option value="midnight">Midnight</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <h4>Show Quick Links</h4>
+                            <p>Display shortcuts on homepage</p>
+                        </div>
+                        <div class="setting-control">
+                            <label class="toggle">
+                                <input type="checkbox" id="showQuickLinks" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Management -->
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    📦 Data Management
+                </div>
+                <div class="settings-section-body">
+                    <!-- Stats -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="bookmarkCount">0</div>
+                            <div class="stat-label">Bookmarks</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="historyCount">0</div>
+                            <div class="stat-label">History Items</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="trackersBlocked">0</div>
+                            <div class="stat-label">Trackers Blocked</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button class="btn-secondary" onclick="exportBookmarks()">
+                            📤 Export Bookmarks
+                        </button>
+                        <button class="btn-danger" onclick="clearHistory()">
+                            🗑️ Clear History
+                        </button>
+                        <button class="btn-danger" onclick="clearAllData()">
+                            ⚠️ Clear All Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- About -->
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    ℹ️ About
+                </div>
+                <div class="settings-section-body">
+                    <p><strong>🦝 Raccoon Browser Web Version</strong></p>
+                    <p style="color: var(--text-muted); margin-top: 0.5rem;">
+                        A privacy-focused browser that doesn't track you. 
+                        Built with 🦝 by Raccoon.
+                    </p>
+                    <p style="color: var(--text-muted); margin-top: 1rem;">
+                        <a href="https://github.com/CyberRaccoonTeam/raccoon-browser" target="_blank" style="color: var(--link-color);">
+                            View on GitHub
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">Settings saved!</div>
+
+    <script src="/static/js/app.js"></script>
+    <script>
+        // Load settings on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            loadStats();
+            setupSettingsListeners();
+            setupModals();
+        });
+
+        async function loadSettings() {
+            try {
+                const res = await fetch('/api/settings');
+                const settings = await res.json();
+                
+                // Apply settings to UI
+                document.getElementById('searchEngine').value = settings.search_engine || 'duckduckgo';
+                document.getElementById('safeSearch').checked = settings.safe_search || false;
+                document.getElementById('blockTrackers').checked = settings.block_trackers !== false;
+                document.getElementById('httpsOnly').checked = settings.https_only !== false;
+                document.getElementById('saveHistory').checked = settings.save_history !== false;
+                document.getElementById('theme').value = settings.theme || 'dark';
+                document.getElementById('showQuickLinks').checked = settings.show_quick_links !== false;
+            } catch (e) {
+                console.log('Using default settings');
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const [bookmarksRes, historyRes, settingsRes] = await Promise.all([
+                    fetch('/api/bookmarks'),
+                    fetch('/api/history?limit=1000'),
+                    fetch('/api/settings')
+                ]);
+                
+                const bookmarks = await bookmarksRes.json();
+                const history = await historyRes.json();
+                const settings = await settingsRes.json();
+                
+                document.getElementById('bookmarkCount').textContent = bookmarks.length;
+                document.getElementById('historyCount').textContent = history.length;
+                document.getElementById('trackersBlocked').textContent = settings.trackers_blocked || 0;
+            } catch (e) {
+                console.error('Failed to load stats:', e);
+            }
+        }
+
+        function setupSettingsListeners() {
+            // Save settings on change
+            const settingInputs = [
+                'searchEngine', 'safeSearch', 'blockTrackers', 
+                'httpsOnly', 'saveHistory', 'theme', 'showQuickLinks'
+            ];
+            
+            settingInputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('change', saveSettings);
+                }
+            });
+        }
+
+        async function saveSettings() {
+            const settings = {
+                search_engine: document.getElementById('searchEngine').value,
+                safe_search: document.getElementById('safeSearch').checked,
+                block_trackers: document.getElementById('blockTrackers').checked,
+                https_only: document.getElementById('httpsOnly').checked,
+                save_history: document.getElementById('saveHistory').checked,
+                theme: document.getElementById('theme').value,
+                show_quick_links: document.getElementById('showQuickLinks').checked
+            };
+            
+            try {
+                await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+                showToast('Settings saved!');
+            } catch (e) {
+                showToast('Failed to save settings');
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        async function exportBookmarks() {
+            try {
+                const res = await fetch('/api/bookmarks');
+                const bookmarks = await res.json();
+                
+                const html = `<!DOCTYPE NETSCAPE-Bookmark-file-1>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<TITLE>Bookmarks</TITLE>
+<H1>Bookmarks</H1>
+<DL><p>
+${bookmarks.map(b => `    <DT><A HREF="${b.url}">${b.title}</A>`).join('\n')}
+</DL><p>`;
+                
+                const blob = new Blob([html], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'raccoon-bookmarks.html';
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                showToast('Bookmarks exported!');
+            } catch (e) {
+                showToast('Export failed');
+            }
+        }
+
+        async function clearHistory() {
+            if (!confirm('Clear all browsing history?')) return;
+            
+            try {
+                await fetch('/api/history', { method: 'DELETE' });
+                loadStats();
+                showToast('History cleared!');
+            } catch (e) {
+                showToast('Failed to clear history');
+            }
+        }
+
+        async function clearAllData() {
+            if (!confirm('This will delete ALL bookmarks and history. Continue?')) return;
+            if (!confirm('Are you sure? This cannot be undone.')) return;
+            
+            try {
+                await fetch('/api/bookmarks/all', { method: 'DELETE' });
+                await fetch('/api/history', { method: 'DELETE' });
+                loadStats();
+                showToast('All data cleared!');
+            } catch (e) {
+                showToast('Failed to clear data');
+            }
+        }
+    </script>
+</body>
+</html>
