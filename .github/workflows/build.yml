@@ -1,0 +1,145 @@
+name: Build Raccoon Browser
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  FIREFOX_VERSION: "148.0.2"
+  MOZ_BUILD_APP: browser
+  BUILD_TIMEOUT_MINUTES: 180
+
+jobs:
+  build:
+    name: Build on Ubuntu Linux
+    runs-on: ubuntu-22.04
+    timeout-minutes: ${{ env.BUILD_TIMEOUT_MINUTES }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 1
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            python3 \
+            python3-pip \
+            mercurial \
+            rustc \
+            cargo \
+            libgtk-3-dev \
+            libdbus-1-dev \
+            libglib2.0-dev \
+            libxt-dev \
+            libasound2-dev \
+            libpulse-dev \
+            libevent-dev \
+            libpixman-1-dev \
+            libdrm-dev \
+            libgbm-dev \
+            libegl1-mesa-dev \
+            libgles2-mesa-dev \
+            wget \
+            curl \
+            xz-utils
+        timeout-minutes: 30
+
+      - name: Setup swap space (prevent OOM)
+        run: |
+          sudo fallocate -l 8G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          free -h
+
+      - name: Download Firefox source
+        run: |
+          echo "🦝 Downloading Firefox ${FIREFOX_VERSION} source..."
+          mkdir -p firefox-source
+          cd firefox-source
+          curl -L "https://archive.mozilla.org/pub/firefox/releases/${FIREFOX_VERSION}/source/firefox-${FIREFOX_VERSION}.source.tar.xz" -o firefox-source.tar.xz
+          tar -xf firefox-source.tar.xz
+          rm firefox-source.tar.xz
+          echo "✅ Firefox source downloaded"
+        timeout-minutes: 30
+
+      - name: Apply Raccoon branding
+        run: |
+          echo "🦝 Applying Raccoon branding..."
+          cd firefox-source
+          mkdir -p browser/branding/raccoon
+          
+          # Copy branding from fork if available
+          if [ -d "../raccoon-browser-fork/librewolf-source/browser/branding" ]; then
+            cp -r ../raccoon-browser-fork/librewolf-source/browser/branding/* browser/branding/raccoon/ 2>/dev/null || true
+            echo "✅ Branding files copied from fork"
+          else
+            echo "⚠️ Creating minimal branding..."
+            mkdir -p browser/branding/raccoon/content
+            echo "Raccoon Browser" > browser/branding/raccoon/brand.properties
+          fi
+          
+          # Apply mozconfig
+          if [ -f "../mozconfig.example" ]; then
+            cp ../mozconfig.example mozconfig
+            echo "✅ mozconfig applied"
+          fi
+
+      - name: Build Firefox
+        run: |
+          echo "🦝 Building Raccoon Browser (this takes 1-3 hours)..."
+          cd firefox-source
+          
+          # Configure build
+          ./mach configure
+          
+          # Build with parallel jobs
+          ./mach build --jobs $(nproc)
+          
+          echo "✅ Build complete!"
+        timeout-minutes: 150
+        env:
+          MACH_USE_SYSTEM_PYTHON: "1"
+
+      - name: Package binary
+        run: |
+          echo "📦 Packaging Raccoon Browser..."
+          cd firefox-source
+          
+          # Find the build output directory
+          BUILD_DIR=$(find obj-* -type d -maxdepth 1 2>/dev/null | head -1)
+          
+          if [ -z "$BUILD_DIR" ]; then
+            echo "❌ Build directory not found!"
+            exit 1
+          fi
+          
+          echo "Build directory: $BUILD_DIR"
+          
+          # Create tarball of the browser
+          mkdir -p ../dist
+          tar -czf ../raccoon-browser-linux-x64.tar.gz -C "$BUILD_DIR/dist" bin
+      
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: raccoon-browser-linux-x64
+          path: raccoon-browser-linux-x64.tar.gz
+          retention-days: 14
+          compression-level: 6
+
+      - name: Upload to GitHub Releases (if tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: raccoon-browser-linux-x64.tar.gz
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

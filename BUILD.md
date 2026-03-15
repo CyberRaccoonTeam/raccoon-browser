@@ -44,9 +44,24 @@ cp mozconfig.example mozconfig
 ./mach run
 ```
 
-### Option 2: Use Pre-built Binaries (Coming Soon)
+### Option 2: Use Pre-built Binaries (Recommended)
 
-Pre-built binaries will be available in Releases once we have CI/CD set up.
+Download from [GitHub Releases](https://github.com/CyberRaccoonTeam/raccoon-browser/releases):
+
+```bash
+# Download latest release
+wget https://github.com/CyberRaccoonTeam/raccoon-browser/releases/latest/download/raccoon-browser-linux-x64.tar.gz
+
+# Extract and run
+tar -xzf raccoon-browser-linux-x64.tar.gz
+./bin/raccoon-browser
+```
+
+**Benefits:**
+- ✅ No 1-3 hour build time
+- ✅ No 50GB disk space required
+- ✅ No dependency installation needed
+- ✅ Ready to run immediately
 
 ---
 

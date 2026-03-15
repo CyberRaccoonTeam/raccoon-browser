@@ -15,14 +15,53 @@ A privacy-focused browser built on Firefox - a real browser fork with full Firef
 
 ## Quick Start
 
+### Option 1: Pre-built Binary (Recommended)
+
+Download the latest release from [GitHub Releases](https://github.com/CyberRaccoonTeam/raccoon-browser/releases):
+
 ```bash
-# Build Firefox (requires mozconfig)
+# Download latest release (replace VERSION with actual version)
+wget https://github.com/CyberRaccoonTeam/raccoon-browser/releases/latest/download/raccoon-browser-linux-x64.tar.gz
+
+# Extract
+tar -xzf raccoon-browser-linux-x64.tar.gz
+
+# Run
+./bin/raccoon-browser
+```
+
+**System Requirements:**
+- Linux (Ubuntu/Debian recommended)
+- 8GB+ RAM
+- GTK3 dependencies: `sudo apt install libgtk-3-dev libdbus-1-dev libglib2.0-dev`
+
+### Option 2: Build from Source
+
+For developers and advanced users:
+
+```bash
+# 1. Clone repository
+git clone https://github.com/CyberRaccoonTeam/raccoon-browser.git
+cd raccoon-browser
+
+# 2. Download Firefox source
+./scripts/download-source.sh
+
+# 3. Apply Raccoon branding
+./scripts/apply-branding.sh
+
+# 4. Configure build
+cp mozconfig.example mozconfig
+
+# 5. Build (takes 1-3 hours)
 cd firefox-source
 ./mach build
 
-# Run Raccoon Browser
+# 6. Run
 ./mach run
 ```
+
+See [BUILD.md](BUILD.md) for detailed build instructions.
 
 ## Tech Stack
 
