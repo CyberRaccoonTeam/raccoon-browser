@@ -65,12 +65,15 @@ jobs:
       - name: Download Firefox source
         run: |
           echo "🦝 Downloading Firefox ${FIREFOX_VERSION} source..."
-          mkdir -p firefox-source
-          cd firefox-source
           curl -L "https://archive.mozilla.org/pub/firefox/releases/${FIREFOX_VERSION}/source/firefox-${FIREFOX_VERSION}.source.tar.xz" -o firefox-source.tar.xz
-          tar -xf firefox-source.tar.xz
+          
+          # Extract to firefox-source directory
+          mkdir -p firefox-source
+          tar -xf firefox-source.tar.xz -C firefox-source --strip-components=1
           rm firefox-source.tar.xz
+          
           echo "✅ Firefox source downloaded"
+          ls -la firefox-source/ | head -20
         timeout-minutes: 30
 
       - name: Apply Raccoon branding
