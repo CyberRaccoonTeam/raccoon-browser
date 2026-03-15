@@ -1,0 +1,37 @@
+# Raccoon Browser - Firefox Build Configuration
+# Based on Firefox build system with Raccoon branding
+
+# Application settings
+ac_add_options --enable-application=browser
+ac_add_options --disable-artifact-builds
+
+# Optimization and feature flags
+ac_add_options --disable-crashreporter
+ac_add_options --disable-debug
+ac_add_options --disable-default-browser-agent
+ac_add_options --disable-tests
+ac_add_options --disable-updater
+ac_add_options --enable-hardening
+ac_add_options --enable-optimize
+ac_add_options --enable-release
+ac_add_options --enable-rust-simd
+
+# Add-on settings
+ac_add_options --allow-addon-sideload
+ac_add_options --with-unsigned-addon-scopes=app,system
+
+# Disable telemetry and data reporting
+mk_add_options MOZ_CRASHREPORTER=0
+mk_add_options MOZ_DATA_REPORTING=0
+mk_add_options MOZ_SERVICES_HEALTHREPORT=0
+mk_add_options MOZ_TELEMETRY_REPORTING=0
+
+# Branding configuration
+ac_add_options --with-branding=browser/branding/raccoon
+ac_add_options --with-app-name=raccoon-browser
+
+# Disable signing requirement for development
+export MOZ_REQUIRE_SIGNING=
+
+# Enable bootstrap for dependencies
+ac_add_options --enable-bootstrap
