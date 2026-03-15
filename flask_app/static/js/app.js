@@ -400,8 +400,112 @@ function hideSuggestions() {
 // Navigation
 // ============================================================================
 
-function navigateTo(url) {
+async function navigateTo(url, options = {}) {
+    // Check site compatibility first
+    const compatibility = await checkSiteCompatibility(url);
+    
+    if (compatibility.is_js_heavy && !options.forceProxy) {
+        // Show compatibility warning for JS-heavy sites
+        showCompatibilityWarning(url, compatibility);
+        return;
+    }
+    
+    // Use full render for JS-heavy sites if user chooses
+    if (compatibility.is_js_heavy && options.useFullRender) {
+        window.location.href = '/api/full-render?url=' + encodeURIComponent(url);
+        return;
+    }
+    
+    // Standard proxy browsing
     window.location.href = '/browse?url=' + encodeURIComponent(url);
+}
+
+async function checkSiteCompatibility(url) {
+    try {
+        const response = await fetch('/api/site-info', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url })
+        });
+        const data = await response.json();
+        return data.info || { is_js_heavy: false, warnings: [] };
+    } catch (error) {
+        console.warn('Compatibility check failed:', error);
+        return { is_js_heavy: false, warnings: [] };
+    }
+}
+
+function showCompatibilityWarning(url, info) {
+    // Create modal
+    const modal = document.createElement('div');
+    modal.id = 'compatibility-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 2147483647;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    `;
+    
+    const content = document.createElement('div');
+    content.style.cssText = `
+        background: #0a0a0a;
+        border: 2px solid #ff9800;
+        border-radius: 12px;
+        padding: 24px;
+        max-width: 500px;
+        color: #e0e0e0;
+    `;
+    
+    const warnings = info.warnings.map(w => `<li style="color: #ff9800; margin: 8px 0;">⚠️ ${w}</li>`).join('');
+    const tips = info.tips.map(t => `<li style="color: #00ff41; margin: 8px 0;">💡 ${t}</li>`).join('');
+    
+    content.innerHTML = `
+        <h2 style="color: #ff9800; margin: 0 0 16px 0; font-size: 20px;">⚠️ JavaScript-Heavy Site Detected</h2>
+        <p style="margin: 0 0 16px 0; color: #888;">${info.domain} is a modern web app (React/Angular/Vue)</p>
+        
+        <div style="background: #1a1a1a; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+            <strong style="color: #ff9800;">Warnings:</strong>
+            <ul style="margin: 8px 0 0 0; padding-left: 20px;">
+                ${warnings}
+            </ul>
+        </div>
+        
+        <div style="background: #1a1a1a; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+            <strong style="color: #00ff41;">Tips:</strong>
+            <ul style="margin: 8px 0 0 0; padding-left: 20px;">
+                ${tips}
+            </ul>
+        </div>
+        
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button onclick="document.getElementById('compatibility-modal').remove()" 
+                style="padding: 10px 16px; background: #333; color: #e0e0e0; border: none; border-radius: 6px; cursor: pointer;">
+                Cancel
+            </button>
+            <button onclick="navigateTo('${url}', {forceProxy: true}); document.getElementById('compatibility-modal').remove();"
+                style="padding: 10px 16px; background: #1a1a1a; color: #888; border: 1px solid #444; border-radius: 6px; cursor: pointer;">
+                Try Proxy Mode
+            </button>
+            <button onclick="navigateTo('${url}', {useFullRender: true}); document.getElementById('compatibility-modal').remove();"
+                style="padding: 10px 16px; background: #00ff41; color: #000; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                🦝 Full Render
+            </button>
+            <a href="${url}" target="_blank"
+                style="padding: 10px 16px; background: #2196F3; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                Open in Browser ↗
+            </a>
+        </div>
+    `;
+    
+    modal.appendChild(content);
+    document.body.appendChild(modal);
 }
 
 function showPage(pageName) {

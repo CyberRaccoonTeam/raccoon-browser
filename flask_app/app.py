@@ -30,6 +30,14 @@ except ImportError:
     ADVANCED_FEATURES = False
     print("⚠️ Advanced features not available - install requirements_advanced.txt")
 
+# Import Playwright renderer
+try:
+    from playwright_renderer import render_with_playwright, is_js_heavy_site, get_site_info
+    PLAYWRIGHT_AVAILABLE = True
+except ImportError:
+    PLAYWRIGHT_AVAILABLE = False
+    print("⚠️ Playwright renderer not available")
+
 app = Flask(__name__, 
             template_folder='templates',
             static_folder='static')
@@ -206,12 +214,14 @@ def health():
     return jsonify({
         'status': 'healthy',
         'service': 'Raccoon Browser',
-        'version': '0.2.0',
+        'version': '0.3.0',
         'features': {
             'session_management': ADVANCED_FEATURES,
             'js_injection': ADVANCED_FEATURES,
             'proxy_browsing': True,
             'tracker_blocking': True,
+            'playwright_rendering': PLAYWRIGHT_AVAILABLE,
+            'site_compatibility_detection': True,
         },
         'timestamp': datetime.now(timezone.utc).isoformat()
     })
@@ -315,6 +325,160 @@ def search():
         'success': False,
         'error': 'No results found'
     })
+
+
+@app.route('/api/site-info', methods=['POST'])
+def site_info():
+    """Get site compatibility information"""
+    data = request.get_json()
+    url = data.get('url', '')
+    
+    if not url:
+        return jsonify({'success': False, 'error': 'No URL provided'}), 400
+    
+    info = get_site_info(url)
+    info['playwright_available'] = PLAYWRIGHT_AVAILABLE
+    
+    return jsonify({
+        'success': True,
+        'info': info,
+    })
+
+
+@app.route('/api/full-render', methods=['POST'])
+def full_render():
+    """Render a page with full JavaScript support using Playwright"""
+    if not PLAYWRIGHT_AVAILABLE:
+        return jsonify({'success': False, 'error': 'Playwright not available'}), 503
+    
+    data = request.get_json()
+    url = data.get('url', '')
+    
+    if not url:
+        return jsonify({'success': False, 'error': 'No URL provided'}), 400
+    
+    # Check if site is JS-heavy
+    info = get_site_info(url)
+    
+    # Render with Playwright
+    html, success, error = render_with_playwright(url)
+    
+    if not success:
+        return jsonify({
+            'success': False,
+            'error': error,
+            'fallback_hint': 'Try opening in native browser',
+        }), 500
+    
+    # Parse and rewrite HTML (same as proxy mode)
+    soup = BeautifulSoup(html, 'html.parser')
+    base_url = url
+    
+    # Remove CSP
+    for meta in soup.find_all('meta', {'http-equiv': 'Content-Security-Policy'}):
+        meta.decompose()
+    
+    # Rewrite URLs
+    from urllib.parse import urljoin
+    for tag in soup.find_all(['link', 'script', 'img', 'iframe', 'source', 'video', 'audio', 'a']):
+        if tag.name == 'link':
+            href = tag.get('href', '')
+            if href and not href.startswith(('data:', 'javascript:')):
+                if href.startswith('//'):
+                    href = 'https:' + href
+                elif href.startswith('/'):
+                    href = urljoin(base_url, href)
+                elif not href.startswith(('http://', 'https://')):
+                    href = urljoin(base_url, href)
+                tag['href'] = f'/browse?url={quote(href)}'
+        elif tag.name == 'script':
+            src = tag.get('src', '')
+            if src and not src.startswith(('data:', 'javascript:')):
+                if src.startswith('//'):
+                    src = 'https:' + src
+                elif src.startswith('/'):
+                    src = urljoin(base_url, src)
+                elif not src.startswith(('http://', 'https://')):
+                    src = urljoin(base_url, src)
+                tag['src'] = f'/browse?url={quote(src)}'
+        elif tag.name in ['img', 'iframe', 'source', 'video', 'audio']:
+            src = tag.get('src', '')
+            if src and not src.startswith(('data:', 'javascript:', 'mailto:')):
+                if src.startswith('//'):
+                    src = 'https:' + src
+                elif src.startswith('/'):
+                    src = urljoin(base_url, src)
+                elif not src.startswith(('http://', 'https://')):
+                    src = urljoin(base_url, src)
+                tag['src'] = f'/browse?url={quote(src)}'
+        elif tag.name == 'a':
+            href = tag.get('href', '')
+            if href and not href.startswith(('data:', 'javascript:', 'mailto:', '#', 'tel:')):
+                if href.startswith('//'):
+                    href = 'https:' + href
+                elif href.startswith('/'):
+                    href = urljoin(base_url, href)
+                elif not href.startswith(('http://', 'https://')):
+                    href = urljoin(base_url, href)
+                tag['href'] = f'/browse?url={quote(href)}'
+    
+    # Add Raccoon header with compatibility notice
+    header = soup.new_tag('div', id='raccoon-header')
+    header['style'] = '''
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: #050505;
+        padding: 8px 12px;
+        border-bottom: 1px solid #00ff41;
+        z-index: 2147483647;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    '''
+    
+    # Home link
+    home_link = soup.new_tag('a', href='/')
+    home_link['style'] = 'color: #00ff41; text-decoration: none; font-size: 20px;'
+    home_link.string = '🦝'
+    header.append(home_link)
+    
+    # URL bar
+    url_input = soup.new_tag('input', type='text', id='raccoon-url', value=url)
+    url_input['style'] = '''
+        flex: 1;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: #e0e0e0;
+        font-size: 13px;
+        outline: none;
+    '''
+    url_input['onkeydown'] = "if(event.key==='Enter'){window.location.href='/browse?url='+encodeURIComponent(this.value);}"
+    header.append(url_input)
+    
+    # Compatibility badge
+    if info['is_js_heavy']:
+        badge = soup.new_tag('span')
+        badge['style'] = 'color: #ff9800; font-size: 12px; padding: 4px 8px; background: rgba(255, 152, 0, 0.2); border-radius: 4px;'
+        badge.string = '⚠️ Full Render Mode (JS-Heavy Site)'
+        header.append(badge)
+    
+    # External link
+    ext_link = soup.new_tag('a', href=url, target='_blank')
+    ext_link['style'] = 'color: #888; text-decoration: none; font-size: 12px;'
+    ext_link.string = '↗ Open in Browser'
+    header.append(ext_link)
+    
+    # Inject header
+    if soup.body:
+        soup.body.insert(0, header)
+        soup.body['style'] = 'padding-top: 50px !important;'
+    
+    return str(soup), 200, {'Content-Type': 'text/html'}
 
 
 @app.route('/api/check-trackers', methods=['POST'])
@@ -426,11 +590,21 @@ def browse():
             # Rewrite CSS URLs to go through proxy
             css = response.text
             import re
-            # Rewrite url() in CSS
-            css = re.sub(r'url\(["\']?/(?!browse)([^"\')\s]+)["\']?\)', 
-                        lambda m: f'url(/browse?url={quote(urljoin(url, "/" + m.group(1)))})', css)
-            css = re.sub(r'url\(["\']?([^"\')\s:]+)["\']?\)', 
-                        lambda m: f'url(/browse?url={quote(urljoin(url, m.group(1)))})' if not m.group(1).startswith('data:') else m.group(0), css)
+            
+            def replace_css_url(match):
+                url_val = match.group(1) or match.group(2) or match.group(3)
+                if not url_val or url_val.startswith('data:'):
+                    return match.group(0)
+                if url_val.startswith('//'):
+                    url_val = 'https:' + url_val
+                elif url_val.startswith('/'):
+                    url_val = urljoin(url, url_val)
+                elif not url_val.startswith(('http://', 'https://')):
+                    url_val = urljoin(url, url_val)
+                return f'url(/browse?url={quote(url_val)})'
+            
+            css = re.sub(r'url\(\s*["\']([^"\')\s]+)["\']\s*\)', replace_css_url, css)
+            css = re.sub(r'url\(\s*([^"\')\s]+)\s*\)', replace_css_url, css)
             return css, 200, {'Content-Type': 'text/css'}
         
         if 'application/javascript' in content_type or 'text/javascript' in content_type:
@@ -443,51 +617,102 @@ def browse():
         from urllib.parse import urljoin
         base_url = response.url
         
-        # Inject base tag for relative URLs
-        if soup.head:
-            existing_base = soup.head.find('base')
-            if existing_base:
-                existing_base['href'] = base_url
-            else:
-                base = soup.new_tag('base', href=base_url)
-                soup.head.insert(0, base)
+        # Remove CSP meta tags (they block proxy resources)
+        for meta in soup.find_all('meta', {'http-equiv': 'Content-Security-Policy'}):
+            meta.decompose()
+        for meta in soup.find_all('meta', {'http-equiv': 'Content-Security-Policy-Report-Only'}):
+            meta.decompose()
+        
+        # Don't inject base tag - it breaks relative URL resolution
+        # Instead, rewrite all URLs explicitly
         
         # Rewrite all resource URLs to go through proxy
-        for tag in soup.find_all(['a', 'link', 'img', 'script', 'iframe', 'source', 'video', 'audio']):
-            # Determine which attribute to rewrite
-            attrs = []
+        for tag in soup.find_all(['link', 'script', 'img', 'iframe', 'source', 'video', 'audio', 'a']):
             if tag.name == 'link':
-                attrs = ['href']
-            elif tag.name in ['img', 'iframe', 'source', 'video', 'audio', 'script']:
-                attrs = ['src']
-            elif tag.name == 'a':
-                attrs = ['href']
+                href = tag.get('href', '')
+                if href and not href.startswith(('data:', 'javascript:')):
+                    if href.startswith('//'):
+                        href = 'https:' + href
+                    elif href.startswith('/'):
+                        href = urljoin(base_url, href)
+                    elif not href.startswith(('http://', 'https://')):
+                        href = urljoin(base_url, href)
+                    tag['href'] = f'/browse?url={quote(href)}'
             
-            for attr in attrs:
-                if tag.has_attr(attr):
-                    original = tag[attr]
-                    # Skip empty, data:, javascript:, or mailto: URLs
-                    if not original or original.startswith(('data:', 'javascript:', 'mailto:', '#')):
-                        continue
-                    
-                    # Handle different URL types
-                    if original.startswith('http://') or original.startswith('https://'):
-                        tag[attr] = f'/browse?url={quote(original)}'
-                    elif original.startswith('//'):
-                        tag[attr] = f'/browse?url={quote("https:" + original)}'
-                    elif original.startswith('/'):
-                        tag[attr] = f'/browse?url={quote(urljoin(base_url, original))}'
-                    elif not original.startswith('http'):
-                        # Relative URL
-                        tag[attr] = f'/browse?url={quote(urljoin(base_url, original))}'
+            elif tag.name == 'script':
+                src = tag.get('src', '')
+                if src and not src.startswith(('data:', 'javascript:')):
+                    if src.startswith('//'):
+                        src = 'https:' + src
+                    elif src.startswith('/'):
+                        src = urljoin(base_url, src)
+                    elif not src.startswith(('http://', 'https://')):
+                        src = urljoin(base_url, src)
+                    tag['src'] = f'/browse?url={quote(src)}'
+            
+            elif tag.name in ['img', 'iframe', 'source', 'video', 'audio']:
+                src = tag.get('src', '')
+                if src and not src.startswith(('data:', 'javascript:', 'mailto:')):
+                    if src.startswith('//'):
+                        src = 'https:' + src
+                    elif src.startswith('/'):
+                        src = urljoin(base_url, src)
+                    elif not src.startswith(('http://', 'https://')):
+                        src = urljoin(base_url, src)
+                    tag['src'] = f'/browse?url={quote(src)}'
+            
+            elif tag.name == 'a':
+                href = tag.get('href', '')
+                if href and not href.startswith(('data:', 'javascript:', 'mailto:', '#', 'tel:')):
+                    if href.startswith('//'):
+                        href = 'https:' + href
+                    elif href.startswith('/'):
+                        href = urljoin(base_url, href)
+                    elif not href.startswith(('http://', 'https://')):
+                        href = urljoin(base_url, href)
+                    tag['href'] = f'/browse?url={quote(href)}'
         
-        # Also rewrite inline styles with url()
+        # Rewrite inline styles with url()
+        import re
         for tag in soup.find_all(style=True):
             style = tag['style']
-            import re
-            style = re.sub(r'url\(["\']?/(?!browse)([^"\')\s]+)["\']?\)',
-                          lambda m: f'url(/browse?url={quote(urljoin(base_url, "/" + m.group(1)))})', style)
+            
+            def replace_style_url(match):
+                url_val = match.group(1) or match.group(2)
+                if not url_val or url_val.startswith('data:'):
+                    return match.group(0)
+                if url_val.startswith('//'):
+                    url_val = 'https:' + url_val
+                elif url_val.startswith('/'):
+                    url_val = urljoin(base_url, url_val)
+                elif not url_val.startswith(('http://', 'https://')):
+                    url_val = urljoin(base_url, url_val)
+                return f'url(/browse?url={quote(url_val)})'
+            
+            style = re.sub(r'url\(\s*["\']([^"\')\s]+)["\']\s*\)', replace_style_url, style)
+            style = re.sub(r'url\(\s*([^"\')\s]+)\s*\)', replace_style_url, style)
             tag['style'] = style
+        
+        # Rewrite style blocks
+        for style_tag in soup.find_all('style'):
+            if style_tag.string:
+                style_css = style_tag.string
+                
+                def replace_block_url(match):
+                    url_val = match.group(1) or match.group(2)
+                    if not url_val or url_val.startswith('data:'):
+                        return match.group(0)
+                    if url_val.startswith('//'):
+                        url_val = 'https:' + url_val
+                    elif url_val.startswith('/'):
+                        url_val = urljoin(base_url, url_val)
+                    elif not url_val.startswith(('http://', 'https://')):
+                        url_val = urljoin(base_url, url_val)
+                    return f'url(/browse?url={quote(url_val)})'
+                
+                style_css = re.sub(r'url\(\s*["\']([^"\')\s]+)["\']\s*\)', replace_block_url, style_css)
+                style_css = re.sub(r'url\(\s*([^"\')\s]+)\s*\)', replace_block_url, style_css)
+                style_tag.string = style_css
         
         # Inject JavaScript bridge and tracker blocker
             if ADVANCED_FEATURES:
