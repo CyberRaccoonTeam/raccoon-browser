@@ -51,6 +51,11 @@ jobs:
 
       - name: Setup swap space (prevent OOM)
         run: |
+          # Remove existing swap if any
+          sudo swapoff -a 2>/dev/null || true
+          sudo rm -f /swapfile
+          
+          # Create new swap
           sudo fallocate -l 8G /swapfile
           sudo chmod 600 /swapfile
           sudo mkswap /swapfile
