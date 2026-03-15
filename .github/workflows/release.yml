@@ -85,17 +85,54 @@ jobs:
         run: |
           echo "🦝 Applying Raccoon branding..."
           cd firefox-source
-          mkdir -p browser/branding/raccoon
+          mkdir -p browser/branding/raccoon/content
           
           # Copy branding from fork if available
           if [ -d "../raccoon-browser-fork/librewolf-source/browser/branding" ]; then
             cp -r ../raccoon-browser-fork/librewolf-source/browser/branding/* browser/branding/raccoon/ 2>/dev/null || true
             echo "✅ Branding files copied from fork"
-          else
-            echo "⚠️ Creating minimal branding..."
-            mkdir -p browser/branding/raccoon/content
-            echo "Raccoon Browser" > browser/branding/raccoon/brand.properties
           fi
+          
+          # Create minimal branding files if not copied
+          if [ ! -f "browser/branding/raccoon/brand.properties" ]; then
+            cat > browser/branding/raccoon/brand.properties << 'EOF'
+            brandShorterName=Raccoon
+            brandShortName=Raccoon Browser
+            brandFullName=Raccoon Browser
+            vendorShortName=Raccoon
+            EOF
+          fi
+          
+          # Create moz.build for branding
+          cat > browser/branding/raccoon/moz.build << 'EOF'
+          # This Source Code Form is subject to the terms of the Mozilla Public
+          # License, v. 2.0. If a copy of the MPL was not distributed with this
+          # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+          
+          DEFINES['MOZ_APP_NAME'] = 'raccoon'
+          
+          if CONFIG['OS_ARCH'] == 'WINNT':
+              DIRS += ['windows']
+          elif CONFIG['OS_ARCH'] == 'Darwin':
+              DIRS += ['macosx']
+          else:
+              DIRS += ['unix']
+          
+          if CONFIG['MOZ_UPDATE_CHANNEL']:
+              DEFINES['MOZ_UPDATE_CHANNEL'] = CONFIG['MOZ_UPDATE_CHANNEL']
+          EOF
+          
+          # Create unix directory with content
+          mkdir -p browser/branding/raccoon/unix
+          cat > browser/branding/raccoon/unix/moz.build << 'EOF'
+          # This Source Code Form is subject to the terms of the Mozilla Public
+          # License, v. 2.0. If a copy of the MPL was not distributed with this
+          # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+          
+          DEFINES['MOZ_APP_NAME'] = 'raccoon'
+          EOF
+          
+          echo "✅ Branding setup complete"
           
           # Apply mozconfig
           if [ -f "../mozconfig.example" ]; then
