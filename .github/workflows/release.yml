@@ -123,18 +123,12 @@ jobs:
           ac_add_options --enable-private-browsing
           ac_add_options --disable-crashreporter
           
-          # Bootstrap settings
-          mk_add_options MOZBUILD_STATE_PATH=${HOME}/.mozbuild
-          
           # Build configuration
           mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-@CONFIG_GUESS@
           mk_add_options MOZ_MAKE_FLAGS="-j$(nproc)"
           EOF
           
-          # Configure build
-          ./mach configure
-          
-          # Build with parallel jobs
+          # Build (mach will configure automatically and bootstrap toolchain)
           ./mach build --jobs $(nproc)
           
           echo "✅ Build complete!"
