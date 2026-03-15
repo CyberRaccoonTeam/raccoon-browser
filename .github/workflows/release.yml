@@ -7,13 +7,12 @@ on:
 
 env:
   FIREFOX_VERSION: "148.0.2"
-  BUILD_TIMEOUT_MINUTES: 180
 
 jobs:
   build-release:
     name: Build Release Binary
     runs-on: ubuntu-22.04
-    timeout-minutes: ${{ env.BUILD_TIMEOUT_MINUTES }}
+    timeout-minutes: 180
     permissions:
       contents: write  # Required for creating releases
     

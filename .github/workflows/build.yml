@@ -8,14 +8,12 @@ on:
 
 env:
   FIREFOX_VERSION: "148.0.2"
-  MOZ_BUILD_APP: browser
-  BUILD_TIMEOUT_MINUTES: 180
 
 jobs:
   build:
     name: Build on Ubuntu Linux
     runs-on: ubuntu-22.04
-    timeout-minutes: ${{ env.BUILD_TIMEOUT_MINUTES }}
+    timeout-minutes: 180
     
     steps:
       - name: Checkout repository
