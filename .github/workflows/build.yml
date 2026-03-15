@@ -106,6 +106,10 @@ jobs:
           echo "🦝 Building Raccoon Browser (this takes 1-3 hours)..."
           cd firefox-source
           
+          # Bootstrap toolchain (downloads clang 17+)
+          echo "🔧 Bootstrapping toolchain..."
+          yes | ./mach bootstrap --application browser
+          
           # Create mozconfig for build
           cat > mozconfig << 'EOF'
           # Raccoon Browser mozconfig
@@ -126,7 +130,7 @@ jobs:
           mk_add_options MOZ_MAKE_FLAGS="-j$(nproc)"
           EOF
           
-          # Build (mach will configure automatically and bootstrap toolchain)
+          # Build
           ./mach build --jobs $(nproc)
           
           echo "✅ Build complete!"
