@@ -2,60 +2,69 @@
 
 > *Digging through the web so you don't have to.*
 
-A privacy-focused, sleek browser with its own non-tracking search engine.
+A privacy-focused browser built on Firefox - a real browser fork with full Firefox engine power.
 
 ## Features
 
-- 🦝 **Privacy First** - Built-in tracker blocking, no telemetry
+- 🦝 **Privacy First** - Firefox-based with enhanced privacy defaults
 - 🔍 **Raccoon Search** - Meta-search via SearXNG with custom ranking
 - 🗑️ **Trash Can Cache** - Visual cache management with one-click clearing
-- ⚡ **Fast** - Minimal footprint, quick startup
+- ⚡ **Fast** - Full Firefox engine performance
 - 🌙 **Dark Theme** - Easy on the eyes, raccoon-approved
+- 🔒 **Real Browser** - Not a web wrapper - actual Firefox fork with full rendering engine
 
 ## Quick Start
 
 ```bash
-# Install dependencies
-npm install
+# Build Firefox (requires mozconfig)
+cd firefox-source
+./mach build
 
-# Run in development
-npm run dev
-
-# Build for production
-npm run build
+# Run Raccoon Browser
+./mach run
 ```
 
 ## Tech Stack
 
-- **Electron.js** - Cross-platform desktop framework
+- **Firefox** - Full browser engine (not Electron!)
 - **SearXNG** - Meta-search engine (no tracking)
 - **SQLite** - Local-only data storage
-- **Tailwind CSS** - Styling (coming soon)
+- **mozconfig** - Custom Firefox build configuration
 
 ## Project Structure
 
 ```
 raccoon-browser/
-├── src/
-│   ├── main/           # Electron main process
-│   │   ├── main.js     # Entry point
-│   │   └── preload.js  # Secure bridge
-│   ├── renderer/       # UI (HTML/CSS/JS)
-│   │   ├── index.html
-│   │   ├── styles/
-│   │   └── scripts/
-│   └── search/         # Search engine logic (coming)
-├── assets/             # Icons, images
-└── tests/              # Test files
+├── firefox-source/       # Firefox browser fork source code
+│   ├── browser/          # Browser-specific code
+│   ├── dom/              # DOM implementation
+│   ├── layout/           # Rendering engine
+│   ├── js/               # JavaScript engine
+│   └── mozconfig         # Build configuration
+├── .git/                 # Version control
+├── .gitignore            # Git ignore rules
+├── README.md             # This file
+└── ROADMAP.md            # Development roadmap
 ```
 
 ## Privacy Features
 
+- ✅ Firefox privacy defaults (no telemetry)
 - ✅ Built-in tracker blocking
 - ✅ HTTPS-only mode
 - ✅ Local-only bookmarks & history
-- ✅ No telemetry or data collection
+- ✅ No data collection
 - ✅ Anonymous search (via SearXNG)
+
+## Why Firefox Fork?
+
+The old Electron/web version was **not a real browser** - just a Flask web app wrapper. This is now a **genuine Firefox fork** with:
+
+- Full rendering engine
+- Complete web standards support
+- Real browser security model
+- Extension compatibility
+- Better performance
 
 ## License
 
