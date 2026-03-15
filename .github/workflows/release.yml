@@ -108,9 +108,34 @@ jobs:
           echo "🦝 Building Raccoon Browser (this takes 1-3 hours)..."
           cd firefox-source
           
-          # Configure and build
-          # Use --enable-bootstrap=no-update to skip toolchain updates
-          ./mach build --jobs $(nproc) --enable-bootstrap=no-update
+          # Create mozconfig for build
+          cat > mozconfig << 'EOF'
+          # Raccoon Browser mozconfig
+          ac_add_options --branding=browser/branding/raccoon
+          ac_add_options --enable-release
+          ac_add_options --enable-optimize
+          
+          # Disable telemetry
+          ac_add_options --disable-telemetry
+          ac_add_options --disable-necko-wifi
+          
+          # Enable privacy features
+          ac_add_options --enable-private-browsing
+          ac_add_options --disable-crashreporter
+          
+          # Bootstrap settings
+          mk_add_options MOZBUILD_STATE_PATH=${HOME}/.mozbuild
+          
+          # Build configuration
+          mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-@CONFIG_GUESS@
+          mk_add_options MOZ_MAKE_FLAGS="-j$(nproc)"
+          EOF
+          
+          # Configure build
+          ./mach configure
+          
+          # Build with parallel jobs
+          ./mach build --jobs $(nproc)
           
           echo "✅ Build complete!"
         timeout-minutes: 150
