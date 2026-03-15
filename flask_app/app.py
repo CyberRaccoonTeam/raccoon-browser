@@ -36,9 +36,11 @@ app = Flask(__name__,
 
 # Configuration
 SEARXNG_INSTANCES = [
-    'https://search.bus-hit.me',
-    'https://search.projectsegfau.lt',
     'https://searx.be',
+    'https://searx.org',
+    'https://search.bus-hit.me',
+    'https://searx.info',
+    'https://opensearch.org',
 ]
 
 TRACKER_DOMAINS = [
@@ -127,35 +129,41 @@ def search_searxng(query):
     return results
 
 
-def search_duckduckgo(query):
-    """DuckDuckGo Instant Answer API"""
+def search_duckduckgo_html(query):
+    """DuckDuckGo HTML search - scrapes real results"""
     results = []
     try:
-        url = f"https://api.duckduckgo.com/?q={quote(query)}&format=json&no_html=1"
+        url = f"https://html.duckduckgo.com/html/?q={quote(query)}"
         headers = {'User-Agent': get_user_agent()}
         
         response = requests.get(url, headers=headers, timeout=10)
-        data = response.json()
+        soup = BeautifulSoup(response.text, 'html.parser')
         
-        for topic in data.get('RelatedTopics', [])[:15]:
-            if isinstance(topic, dict) and 'FirstURL' in topic:
-                ddg_url = topic.get('FirstURL', '')
-                # Convert DuckDuckGo redirect URLs to real URLs
-                # e.g., https://duckduckgo.com/Python_(programming_language) -> https://en.wikipedia.org/wiki/Python_(programming_language)
-                if 'duckduckgo.com/' in ddg_url:
-                    # Extract the article name and convert to Wikipedia URL
-                    article_name = ddg_url.split('duckduckgo.com/')[-1]
-                    real_url = f"https://en.wikipedia.org/wiki/{article_name}"
-                else:
-                    real_url = ddg_url
+        for result in soup.select('.result')[:15]:
+            title_tag = result.select_one('.result__title')
+            url_tag = result.select_one('.result__url')
+            snippet_tag = result.select_one('.result__snippet')
+            
+            if title_tag and url_tag:
+                title = title_tag.get_text(strip=True)
+                url = url_tag.get('href', '')
+                
+                # DuckDuckGo uses redirect URLs, extract real URL
+                if 'uddg=' in url:
+                    from urllib.parse import parse_qs
+                    parsed = parse_qs(urlparse(url).query)
+                    if 'uddg' in parsed:
+                        url = parsed['uddg'][0]
+                
+                snippet = snippet_tag.get_text(strip=True) if snippet_tag else ''
                 
                 results.append({
-                    'title': topic.get('Text', '').split(' - ')[0][:100],
-                    'url': real_url,
-                    'content': topic.get('Text', '')[:200],
+                    'title': title,
+                    'url': url,
+                    'content': snippet[:200],
                 })
     except Exception as e:
-        print(f"DDG error: {e}")
+        print(f"DDG HTML error: {e}")
     
     return results
 
@@ -279,20 +287,19 @@ def search():
     if not query:
         return jsonify({'success': False, 'error': 'No query provided'}), 400
     
-    # Try SearXNG first (most reliable, real URLs)
+    # Try SearXNG first (meta-search, real web results)
     results = search_searxng(query)
     instance = 'SearXNG'
     
-    # Fallback to DuckDuckGo + Wikipedia if SearXNG fails
+    # Fallback to DuckDuckGo HTML search (real results, not just Wikipedia)
     if not results:
-        results = search_duckduckgo(query)
+        results = search_duckduckgo_html(query)
         instance = 'DuckDuckGo'
-        
-        # Add Wikipedia results for better coverage
-        if len(results) < 3:
-            wiki_results = search_wikipedia(query)
-            results.extend(wiki_results)
-            instance = 'DuckDuckGo + Wikipedia'
+    
+    # Final fallback: Wikipedia only if nothing else works
+    if not results:
+        results = search_wikipedia(query)
+        instance = 'Wikipedia'
     
     if results:
         ranked = apply_raccoon_ranking(results, query)
